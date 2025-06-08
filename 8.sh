@@ -1,29 +1,15 @@
 #!/bin/bash
 
-# Инициализация переменных
-first_value=""
-error=0
-found_vars=0
+vals=$(env | awk -F= '/^LC_/ {print $2}' | sort -u)
+num=$(echo "$vals" | wc -l)
 
-# Поиск и проверка переменных локализации
-for var in $(env | grep "^LC_" | cut -d= -f1); do
-    found_vars=1
-    value="${!var}"
-    
-    if [ -z "$first_value" ]; then
-        first_value="$value"
-    elif [ "$value" != "$first_value" ]; then
-        error=1
-        echo "Ошибка: $var=$value отличается от $first_value"
-    fi
-done
-
-# Вывод результата
-if [ $found_vars -eq 0 ]; then
-    echo "Переменные локализации не найдены"
-    exit 0
-elif [ $error -eq 0 ]; then
-    echo "Все переменные локализации имеют значение: $first_value"
-else
+if [ "$num" -gt 1 ]; then
+    echo "ОШИБКА: Переменные локализации имеют разные значения:"
+    env | grep '^LC_'
     exit 1
-fi 
+elif [ "$num" -eq 0 ]; then
+    echo "Предупреждение: Не найдено переменных локализации LC_*"
+else
+    echo "Все переменные локализации LC_* имеют одинаковое значение:"
+    env | grep '^LC_' | head -n1
+fi

@@ -1,31 +1,20 @@
 #!/bin/bash
 
-# Проверка количества аргументов
-if [ $# -ne 2 ]; then
-    echo "Использование: $0 <имя_файла> <время_в_секундах>"
+# Проверка аргументов
+# Не хочу чтобы можно было дописать строчки в файлики с заданием
+if [ $# -ne 2 ] || [[ "$1" =~ ^[1-8]\.sh$ ]]; then
+    echo "Использование: $0 <имя_файла_для_записи> <время_в_секундах>"
     exit 1
 fi
 
 output_file=$1
 duration=$2
 
-# Очищаем файл, если он существует
-> "$output_file"
+target_time=$(($(date +%s) + duration))
 
-# Основной цикл
-for ((i=1; i<=duration; i++)); do
-    # Получаем текущую дату и время
-    timestamp=$(date '+%d.%m.%y %H:%M:%S')
-    
-    # Получаем загрузку системы
-    load=$(cat /proc/loadavg | awk '{print $1, $2, $3}')
-    
-    # Записываем в файл
-    echo "$timestamp $load" >> "$output_file"
-    
-    # Ждем секунду
+while [ $(date +%s) -lt $target_time ]; do
+    current_time=$(date "+[%d.%m.%y %H:%M]")
+    system_load=$(cat /proc/loadavg | cut -d' ' -f1-3)
+    printf "%s = %s\n" "$current_time" "$system_load" >> "$output_file"
     sleep 1
 done
-
-# Выводим только содержимое файла
-cat "$output_file" 
